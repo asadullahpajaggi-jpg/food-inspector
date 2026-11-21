@@ -21,19 +21,17 @@ def _records():
 RECORDS = _records()
 
 def _segments(raw):
-    # Normalize common label wording and punctuation without treating explanatory text as an ingredient.
-    text = re.sub(r"(?i)\b(ingredients?|ingredient list)\s*[:：]", "", str(raw))
-    text = re.sub(r"(?i)\b(may contain|contains traces of)\b", " ", text)
-    return [s.strip(" .:-()[]{}") for s in re.split(r"[,;\n\r•]+", text) if s.strip(" .:-()[]{}")]
+    text = re.sub(r"(?i)\\b(ingredients?|ingredient list)\\s*[:：]", "", str(raw))
+    text = re.sub(r"(?i)\\b(may contain|contains traces of)\\b", " ", text)
+    return [s.strip(" .:-()[]{}") for s in re.split(r"[,;\\n\\r•]+", text) if s.strip(" .:-()[]{}")]
 
 def analyze_input(raw):
     segments = _segments(raw)
     if not segments:
         segments = [str(raw).strip()]
-    matches, unknown, seen = [], [], set()
+    matches, unknown, seen_records, seen_unknown = [], [], set(), set()
     for segment in segments:
         normalized = _clean(segment)
-        # Collect the actual alias hit and span to prefer a more specific phrase.
         hits = []
         for record in RECORDS:
             for alias in record["aliases"]:
@@ -42,22 +40,24 @@ def analyze_input(raw):
                     continue
                 for m in re.finditer(r"(?<![a-z0-9])" + re.escape(phrase) + r"(?![a-z0-9])", normalized):
                     hits.append((m.start(), m.end(), len(phrase), record))
-        # Suppress a shorter overlapping hit when a longer matched phrase is more specific.
+        # Prefer the longest phrase. On equal spans, prefer the E-Code record;
+        # otherwise prefer the more specific (shorter-key) ingredient record.
+        hits.sort(key=lambda h: (h[2], h[3]["type"] == "E-Code", -len(h[3]["key"])), reverse=True)
         selected = []
-        for hit in sorted(hits, key=lambda h: (h[2], h[1]-h[0]), reverse=True):
-            start, end, length, record = hit
-            if any(start >= a and end <= b and (b-a) > (end-start) for a,b,_ in selected):
+        for start, end, _, record in hits:
+            if any(start < old_end and end > old_start for old_start, old_end, _ in selected):
                 continue
-            selected.append((start,end,record))
+            selected.append((start, end, record))
         segment_hits = []
-        for _,_,record in selected:
-            if record["key"] not in seen:
-                seen.add(record["key"])
+        for _, _, record in selected:
+            if record["key"] not in seen_records:
+                seen_records.add(record["key"])
                 matches.append({k:record[k] for k in ("name","status","reason","type")})
             segment_hits.append(record)
         if not segment_hits:
-            residual = re.sub(r"\b(ingredients?|contains|may contain|made with)\b", "", normalized).strip()
-            if residual:
+            residual = re.sub(r"\\b(ingredients?|contains|may contain|made with)\\b", "", normalized).strip()
+            if residual and residual not in seen_unknown:
+                seen_unknown.add(residual)
                 unknown.append(segment)
 
     statuses = {item["status"] for item in matches}
