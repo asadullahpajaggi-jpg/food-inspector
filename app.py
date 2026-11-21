@@ -58,12 +58,12 @@ if st.button("🔍 Check Status", use_container_width=True):
             "MASHKOOK": "This ingredient list contains an ingredient whose source or processing needs confirmation.",
             "UNKNOWN": "Some ingredients could not be identified, so the list needs further checking."
         }.get(status, "The ingredient list needs further checking.")
-        findings = "; ".join(item["name"] + " (" + item["status"] + "): " + item["reason"] for item in result["matches"])
+        findings = ". ".join(item["name"] + " (" + item["status"] + "): " + item["reason"].rstrip(". ") for item in result["matches"])
         if result["unknown"]:
             if status in ("HARAM", "MASHKOOK"):
-                findings += ("; " if findings else "") + "Other unidentified ingredients also need checking: " + ", ".join(result["unknown"])
+                findings += (". " if findings else "") + "Other unidentified ingredients also need checking: " + ", ".join(result["unknown"])
             else:
-                findings += ("; " if findings else "") + "Unidentified: " + ", ".join(result["unknown"])
+                findings += (". " if findings else "") + "Unidentified: " + ", ".join(result["unknown"])
         main_report = intro + (" " + findings if findings else "")
         disclaimer = "This is an educational reference, not Halal certification or a fatwa."
         report_text = main_report + " " + disclaimer
