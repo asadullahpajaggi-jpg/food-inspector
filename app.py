@@ -43,21 +43,29 @@ if st.button("🔍 Check Status", use_container_width=True):
         result = analyze_input(text_input)
         st.markdown("## Preliminary assessment")
         st.subheader(result["status"])
-        if not result["matches"]:
-            st.warning("No recognized ingredient or E-Code was found. This does not mean the product is Halal or Haram. Please check the spelling or ask a qualified scholar.")
-        else:
-            st.write(f"Found {len(result['matches'])} matching reference item(s):")
+        if result["status"] == "HARAM":
+            st.error("A matched prohibited item was found in this reference dataset.")
+        elif result["status"] == "MASHKOOK":
+            st.warning("At least one matched item needs source, process, or scholarly confirmation. Exercise caution.")
+        elif result["status"] == "UNKNOWN":
+            st.info("The list contains unrecognized items, or no matching records. Unknown does not mean Halal or Haram.")
+        elif result["status"] == "HALAL":
+            st.success("All recognized list segments matched entries marked generally permissible in this reference database. This is not certification.")
+
+        if result["matches"]:
+            st.markdown("### Matched ingredients")
             for item in result["matches"]:
                 with st.expander(f"{item['status']} · {item['name']}", expanded=True):
                     st.caption(item["type"])
                     st.write(item["reason"])
-            if result["status"] == "HARAM":
-                st.error("At least one matched item is marked HARAM in this reference database.")
-            elif result["status"] == "MASHKOOK":
-                st.warning("At least one matched item needs source, process, or scholarly confirmation. Exercise caution.")
-            elif result["status"] == "HALAL":
-                st.success("All recognized items in this input are marked generally permissible in this reference database. This is not certification.")
-        st.caption("Matching is based on known names and aliases. It does not yet verify every word in an ingredient list, product formulation, or cross-contamination.")
+        if result["unknown"]:
+            st.markdown("### ⚠️ Items needing identification")
+            for item in result["unknown"]:
+                st.write(f"• **{item}**")
+            st.caption("These segments were not recognized in the current database. Please verify them; they are not automatically classified.")
+        if not result["matches"] and not result["unknown"]:
+            st.warning("No usable ingredient segments were detected.")
+        st.caption("This parser separates typical comma, semicolon and line-separated lists. Complex ingredient descriptions may still require manual review.")
 
 st.markdown("---")
 st.markdown("### 📘 Status categories")
@@ -65,7 +73,7 @@ st.markdown("""
 - **HALAL:** Generally permissible based on available ingredient information.
 - **HARAM:** Identified as prohibited.
 - **MASHKOOK:** Source, process, or scholarly assessment requires caution.
-- **UNKNOWN:** No recognized matching reference was found.
+- **UNKNOWN:** Ingredient could not be matched; more information is needed.
 """)
 st.markdown("""
 <div class="panel">
