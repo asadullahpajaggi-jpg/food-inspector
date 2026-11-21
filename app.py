@@ -1,6 +1,6 @@
 import streamlit as st
 from knowledge_base import INGREDIENTS, E_CODES, FACTS, knowledge_base_summary
-from matcher import analyze_input
+from matcher import analyze_input\nfrom decision_engine import decide
 
 st.set_page_config(page_title="Food Inspector | Halal & E-Code Checker", page_icon="🍽️", layout="centered")
 
@@ -40,9 +40,14 @@ if st.button("🔍 Check Status", use_container_width=True):
     if not text_input.strip():
         st.warning("Bhai, please enter an ingredient or E-Code first.")
     else:
-        result = analyze_input(text_input)
+        parsed = analyze_input(text_input)\n        decision = decide(parsed)\n        result = {**parsed, **decision}
         st.markdown("## Preliminary assessment")
         st.subheader(result["status"])
+        st.write(result["rule_explanation"])
+        with st.expander("🧠 Reasoning Trace", expanded=True):
+            for step in result["trace"]:
+                st.write("**Step " + str(step["step"]) + " · " + step["type"] + "** — " + step["detail"])
+            st.caption("Rule fired: " + result["rule_id"] + " · Priority: " + str(result["priority"]))
         if result["status"] == "HARAM":
             st.error("A matched prohibited item was found in this reference dataset.")
         elif result["status"] == "MASHKOOK":
