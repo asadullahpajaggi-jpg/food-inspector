@@ -4,6 +4,7 @@ from matcher import analyze_input
 from decision_engine import decide
 from rule_audit import audit_rules_and_data
 from smart_match import suggest_matches
+from label_analysis import analyze_label
 
 st.set_page_config(page_title="Food Inspector | Halal & E-Code Checker", page_icon="🍽️", layout="centered")
 
@@ -43,10 +44,11 @@ if st.button("🔍 Check Status", use_container_width=True):
     if not text_input.strip():
         st.warning("Bhai, please enter an ingredient or E-Code first.")
     else:
-        parsed = analyze_input(text_input)
-        decision = decide(parsed)
+        label_report = analyze_label(text_input)
+        parsed = label_report[\"parsed\"]
+        decision = label_report[\"decision\"]
         result = {**parsed, **decision}
-        st.markdown("## Preliminary assessment")
+        st.markdown("## Preliminary assessment")\n        st.write(label_report[\"summary\"])\n        counts = label_report[\"counts\"]\n        c1,c2,c3 = st.columns(3)\n        c1.metric("Generally Halal matches", counts[\"HALAL\"])\n        c2.metric("Doubtful matches", counts[\"MASHKOOK\"])\n        c3.metric("Haram matches", counts[\"HARAM\"])\n        if label_report[\"advisories\"]:\n            st.warning("Precautionary label statements detected separately (not treated as direct ingredients):")\n            for advisory in label_report[\"advisories\"]:\n                st.write("• " + advisory)\n            st.caption("These statements indicate possible exposure or shared-facility risk, not proof that the listed substance is a direct ingredient. Seek product-specific clarification.")
         st.subheader(result["status"])
         st.write(result["rule_explanation"])
         with st.expander("🧠 Reasoning Trace", expanded=True):
