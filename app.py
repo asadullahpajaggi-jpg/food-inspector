@@ -3,6 +3,7 @@ from knowledge_base import INGREDIENTS, E_CODES, FACTS, knowledge_base_summary
 from matcher import analyze_input
 from decision_engine import decide
 from rule_audit import audit_rules_and_data
+from smart_match import suggest_matches
 
 st.set_page_config(page_title="Food Inspector | Halal & E-Code Checker", page_icon="🍽️", layout="centered")
 
@@ -71,7 +72,7 @@ if st.button("🔍 Check Status", use_container_width=True):
             st.markdown("### ⚠️ Items needing identification")
             for item in result["unknown"]:
                 st.write(f"• **{item}**")
-            st.caption("These segments were not recognized in the current database. Please verify them; they are not automatically classified.")
+            st.caption("These segments were not recognized in the current database. Please verify them; they are not automatically classified.")\n            smart_suggestions = suggest_matches(result["unknown"])\n            for suggestion in smart_suggestions:\n                if suggestion["candidates"]:\n                    st.markdown("**Possible matches for: " + suggestion["input"] + "**")\n                    for candidate in suggestion["candidates"]:\n                        st.write(candidate["name"] + " · " + candidate["status"] + " · Similarity " + str(candidate["similarity"]))\n                        st.caption(candidate["reason"])\n                else:\n                    st.caption("No close suggestion found for: " + suggestion["input"])
         if not result["matches"] and not result["unknown"]:
             st.warning("No usable ingredient segments were detected.")
         st.caption("This parser separates typical comma, semicolon and line-separated lists. Complex ingredient descriptions may still require manual review.")
