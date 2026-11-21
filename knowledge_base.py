@@ -48,7 +48,7 @@ INGREDIENTS = {
     "soy": {"status":"HALAL","group":"plant","aliases":["soybean","soya"],"reason":"Soy is plant-derived and generally permissible."},
     "corn": {"status":"HALAL","group":"plant","aliases":["maize"],"reason":"Corn is plant-derived and generally permissible."},
     "wheat": {"status":"HALAL","group":"plant","aliases":["flour","wheat flour"],"reason":"Wheat is plant-derived and generally permissible."},
-    "sugar": {"status":"MASHKOOK","group":"plant_processing","aliases":["sucrose"],"reason":"Sugar is generally permissible; some refining processes may use animal-derived processing aids, depending on region."},
+    "sugar": {"status":"HALAL","group":"plant","aliases":["sucrose"],"reason":"Sugar is plant-derived and generally permissible. Some refining methods may vary by region; product-specific confirmation may be appropriate when needed."},
     "pectin": {"status":"HALAL","group":"plant_additive","aliases":["e440"],"reason":"Pectin is generally plant-derived."},
     "agar": {"status":"HALAL","group":"plant_additive","aliases":["e406"],"reason":"Agar is seaweed-derived."},
     "carrageenan": {"status":"HALAL","group":"plant_additive","aliases":["e407"],"reason":"Carrageenan is seaweed-derived."},
