@@ -1,5 +1,6 @@
 import streamlit as st
 from knowledge_base import INGREDIENTS, E_CODES, FACTS, knowledge_base_summary
+from matcher import analyze_input
 
 st.set_page_config(page_title="Food Inspector | Halal & E-Code Checker", page_icon="🍽️", layout="centered")
 
@@ -32,7 +33,6 @@ m3.metric("Knowledge Facts", summary["total_facts"])
 
 st.markdown("### 🔎 Check an Ingredient or E-Code")
 st.write("Enter a food ingredient, product ingredient list, or E-Code.")
-
 text_input = st.text_area("Ingredients / E-Codes", placeholder="Example: E471, gelatin, whey, chicken, or paste an ingredient list...", height=140)
 st.caption("Enter a single ingredient, an E-Code, or a complete ingredient list.")
 
@@ -40,7 +40,24 @@ if st.button("🔍 Check Status", use_container_width=True):
     if not text_input.strip():
         st.warning("Bhai, please enter an ingredient or E-Code first.")
     else:
-        st.info("The knowledge base is ready for integration with the reasoning engine. Ingredient analysis will be enabled in the next development stage.")
+        result = analyze_input(text_input)
+        st.markdown("## Preliminary assessment")
+        st.subheader(result["status"])
+        if not result["matches"]:
+            st.warning("No recognized ingredient or E-Code was found. This does not mean the product is Halal or Haram. Please check the spelling or ask a qualified scholar.")
+        else:
+            st.write(f"Found {len(result['matches'])} matching reference item(s):")
+            for item in result["matches"]:
+                with st.expander(f"{item['status']} · {item['name']}", expanded=True):
+                    st.caption(item["type"])
+                    st.write(item["reason"])
+            if result["status"] == "HARAM":
+                st.error("At least one matched item is marked HARAM in this reference database.")
+            elif result["status"] == "MASHKOOK":
+                st.warning("At least one matched item needs source, process, or scholarly confirmation. Exercise caution.")
+            elif result["status"] == "HALAL":
+                st.success("All recognized items in this input are marked generally permissible in this reference database. This is not certification.")
+        st.caption("Matching is based on known names and aliases. It does not yet verify every word in an ingredient list, product formulation, or cross-contamination.")
 
 st.markdown("---")
 st.markdown("### 📘 Status categories")
@@ -48,6 +65,7 @@ st.markdown("""
 - **HALAL:** Generally permissible based on available ingredient information.
 - **HARAM:** Identified as prohibited.
 - **MASHKOOK:** Source, process, or scholarly assessment requires caution.
+- **UNKNOWN:** No recognized matching reference was found.
 """)
 st.markdown("""
 <div class="panel">
@@ -60,6 +78,6 @@ requires proper Zabiha slaughter and avoidance of prohibited contamination.
 st.markdown("<br><p style='text-align:center;color:#567066'>Food Inspector · Halal Food Awareness & Ingredient Analysis</p>",unsafe_allow_html=True)
 
 with st.expander("Knowledge Base Preview (Developer Preview)"):
-    st.write("Starter records are loaded. Full analysis and reasoning will be added in the next stage.")
+    st.write("Reference database counts and example records.")
     st.write("Some classifications are intentionally cautious or source-dependent.")
     st.json({"summary":summary,"example_e_codes":list(E_CODES)[:12],"example_ingredients":list(INGREDIENTS)[:12]})
