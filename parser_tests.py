@@ -15,7 +15,7 @@ TEST_CASES = [
     {"name":"Mixed halal and haram", "input":"salt, pork", "expected":"HARAM"},
     {"name":"Mixed halal and doubtful", "input":"salt, gelatin", "expected":"MASHKOOK"},
     {"name":"Chicken requires confirmation", "input":"chicken", "expected":"MASHKOOK"},
-    {"name":"Label prefix", "input":"Ingredients: salt, sugar", "expected":"MASHKOOK"},
+    {"name":"Label prefix", "input":"Ingredients: salt, sugar", "expected":"HALAL"},
     {"name":"Specific pig gelatin phrase", "input":"porcine gelatin", "expected":"HARAM"},
     {"name":"E471 doubtful", "input":"E471", "expected":"MASHKOOK"},
     {"name":"Recognized list plus unknown", "input":"salt, xyz additive", "expected":"UNKNOWN"},
@@ -30,6 +30,9 @@ TEST_CASES = [
     {"name":"Tallow is source-sensitive", "input":"Tallow", "expected":"MASHKOOK"},
     {"name":"Beef tallow is not generic beef", "input":"Beef Tallow", "expected":"MASHKOOK"},
     {"name":"Vegetable tallow is not generic vegetables", "input":"Vegetable Tallow", "expected":"HALAL"},
+    {"name":"Wine is not duplicated through alcohol beverage alias", "input":"Wine", "expected":"HARAM"},
+    {"name":"Mixed doubtful and unknown remains cautious", "input":"Gelatin, E999", "expected":"MASHKOOK"},
+    {"name":"Expanded plant oil coverage", "input":"Flaxseed Oil, Walnut Oil, Almond Oil, Hazelnut Oil, Safflower Oil, Cottonseed Oil, Palm Kernel Oil, Macadamia Oil", "expected":"HALAL"},
 
 ]
 
