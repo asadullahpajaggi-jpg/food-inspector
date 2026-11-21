@@ -2,6 +2,7 @@ import streamlit as st
 from knowledge_base import INGREDIENTS, E_CODES, FACTS, knowledge_base_summary
 from matcher import analyze_input
 from decision_engine import decide
+from rule_audit import audit_rules_and_data
 
 st.set_page_config(page_title="Food Inspector | Halal & E-Code Checker", page_icon="🍽️", layout="centered")
 
@@ -97,3 +98,26 @@ with st.expander("Knowledge Base Preview (Developer Preview)"):
     st.write("Reference database counts and example records.")
     st.write("Some classifications are intentionally cautious or source-dependent.")
     st.json({"summary":summary,"example_e_codes":list(E_CODES)[:12],"example_ingredients":list(INGREDIENTS)[:12]})
+
+
+with st.expander("🛠️ Developer Audit · Stage 6"):
+    audit = audit_rules_and_data()
+    st.metric("Rules inspected", audit["rule_count"])
+    st.metric("Knowledge facts inspected", audit["fact_count"])
+    if audit["issues"]:
+        st.error("Audit issues detected")
+        for issue in audit["issues"]:
+            st.write("• " + issue)
+    else:
+        st.success("No structural errors detected by this audit.")
+    if audit["warnings"]:
+        st.warning("Warnings")
+        for warning in audit["warnings"]:
+            st.write("• " + warning)
+    st.markdown("#### Automated decision tests")
+    for test in audit["tests"]:
+        st.write(("✅ PASS" if test["passed"] else "❌ FAIL") + " · " + test["name"] + " · Expected " + test["expected"] + " / Got " + test["actual"] + " (" + test["rule"] + ")")
+    st.markdown("#### Rule register")
+    for rule in sorted(audit["rules"], key=lambda r: r["priority"], reverse=True):
+        st.write(rule["id"] + " · Priority " + str(rule["priority"]) + " · " + rule["when"] + " → " + rule["conclusion"])
+        st.caption(rule["explanation"])
