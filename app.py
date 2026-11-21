@@ -122,6 +122,8 @@ if st.button("🔍 Check Status", use_container_width=True):
         </div>
         <script>
           const report = REPORT_PLACEHOLDER;
+          const cardHtml = MAIN_HTML_PLACEHOLDER;
+          document.getElementById('resultText').innerHTML = cardHtml;
           document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable';}};
         </script>
         """.replace("REPORT_PLACEHOLDER", safe_report).replace("MAIN_HTML_PLACEHOLDER", json.dumps("".join(card_parts)))
