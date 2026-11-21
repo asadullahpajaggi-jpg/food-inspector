@@ -20,31 +20,163 @@ st.markdown("""
 .hero p { color:#e2f4e9 !important; }
 .panel { background:var(--secondary-background-color); color:var(--text-color); padding:1.2rem 1.4rem; border:1px solid rgba(128,128,128,.25); border-radius:18px; }
 .panel b { color:var(--text-color); }
+.hero { overflow-wrap:anywhere; }
+[data-testid="column"] { min-width:0; }
+@media (max-width: 640px) { .hero { padding:1.4rem 1rem; border-radius:18px; } .hero h1 { font-size:2rem; } .block-container { padding-top:1rem; } }
 div.stButton > button { background:#16764a; color:white; border:0; border-radius:12px; min-height:3rem; font-weight:700; }
 div.stButton > button:hover { background:#105c39; color:white; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<div class="hero">
-<h1>🍽️ Food Inspector</h1>
-<p>Halal Food & E-Code Checker</p>
-<p><b>Assalam-o-Alaikum!</b> Welcome to your ingredient checking assistant.</p>
-</div>
-""", unsafe_allow_html=True)
+
+# URL-backed navigation keeps the selected checker mode shareable and supports browser history.
+def navigate(page, mode=None):
+    st.query_params.clear()
+    if page != "home":
+        st.query_params["page"] = page
+    if mode:
+        st.query_params["mode"] = mode
+    st.rerun()
+
+page = st.query_params.get("page", "home")
+checker_mode = st.query_params.get("mode", "ingredients")
+if page not in {"home", "checker", "about", "guide", "how", "developer"}:
+    page = "home"
+if checker_mode not in {"ingredients", "ecode", "scanner"}:
+    checker_mode = "ingredients"
 
 summary = knowledge_base_summary()
-m1,m2,m3 = st.columns(3)
-m1.metric("Ingredient Records", summary["ingredient_records"])
-m2.metric("E-Code Records", summary["e_code_records"])
-m3.metric("Knowledge Facts", summary["total_facts"])
+should_check = False
+text_input = ""
 
-st.markdown("### 🔎 Check an Ingredient or E-Code")
-st.write("Enter a food ingredient, product ingredient list, or E-Code.")
-text_input = st.text_area("Ingredients / E-Codes", placeholder="Example: E471, gelatin, whey, chicken, or paste an ingredient list...", height=140)
-st.caption("Enter a single ingredient, an E-Code, or a complete ingredient list.")
+if page == "home":
+    st.markdown("""
+    <div class="hero">
+      <h1>🍽️ Food Inspector</h1>
+      <p>Halal Food &amp; E-Code Checker</p>
+      <p><b>Assalam-o-Alaikum!</b> Check food ingredients with a clear, educational reference.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-if st.button("🔍 Check Status", use_container_width=True):
+    st.markdown("### Choose your inspection method")
+    st.caption("Select one option. All three options use the same Ingredients Checker page.")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("### 🥗")
+        st.markdown("**Ingredient Check**")
+        st.caption("Analyze a single ingredient or a complete ingredient list.")
+        if st.button("Check Ingredients", key="home_ingredients", use_container_width=True):
+            navigate("checker", "ingredients")
+    with c2:
+        st.markdown("### 🔢")
+        st.markdown("**E-Code Check**")
+        st.caption("Look up food additive codes such as E471 or E441.")
+        if st.button("Check E-Codes", key="home_ecodes", use_container_width=True):
+            navigate("checker", "ecode")
+    with c3:
+        st.markdown("### 📷")
+        st.markdown("**Product Scanner**")
+        st.caption("Product image, barcode and QR inspection are planned for a future stage.")
+        if st.button("Open Scanner", key="home_scanner", use_container_width=True):
+            navigate("checker", "scanner")
+
+    st.markdown("---")
+    st.markdown("### Explore Food Inspector")
+    n1, n2, n3 = st.columns(3)
+    with n1:
+        if st.button("📘 Ingredient Guide", key="home_guide", use_container_width=True):
+            navigate("guide")
+    with n2:
+        if st.button("⚙️ How It Works", key="home_how", use_container_width=True):
+            navigate("how")
+    with n3:
+        if st.button("ℹ️ About", key="home_about", use_container_width=True):
+            navigate("about")
+
+elif page == "checker":
+    back_col, title_col = st.columns([1, 5])
+    with back_col:
+        if st.button("← Back", key="checker_back"):
+            navigate("home")
+    mode_titles = {
+        "ingredients": ("🥗 Ingredient Checker", "Enter one ingredient or paste a complete ingredient list."),
+        "ecode": ("🔢 E-Code Checker", "Enter an E-Code or multiple E-Codes separated by commas."),
+        "scanner": ("📷 Product Scanner", "Product scanning will be introduced in a future update.")
+    }
+    title, description = mode_titles[checker_mode]
+    with title_col:
+        st.markdown("### " + title)
+    st.caption(description)
+
+    if checker_mode == "scanner":
+        st.info("Product Scanner is coming soon.")
+        st.write("The planned scanner will support product-label images and, where product data is available, barcode or QR-code lookup.")
+        st.caption("No product is scanned or verified in this preview.")
+    else:
+        if checker_mode == "ingredients":
+            text_input = st.text_area(
+                "Ingredient list",
+                placeholder="Example: Sugar, Salt, E471, Gelatin...",
+                height=140,
+                key="ingredient_input"
+            )
+            st.caption("You can enter a single ingredient or paste the full ingredient list from a product label.")
+            check_label = "🔍 Analyze Ingredients"
+        else:
+            text_input = st.text_input(
+                "Food additive code(s)",
+                placeholder="Example: E471 or E471, E441",
+                key="ecode_input"
+            )
+            st.caption("Enter one E-Code or a comma-separated list of E-Codes.")
+            check_label = "🔍 Check E-Code"
+        should_check = st.button(check_label, use_container_width=True, key="run_checker")
+elif page == "about":
+    if st.button("← Back", key="about_back"):
+        navigate("home")
+    st.markdown("## About Food Inspector")
+    st.write("Food Inspector is an educational Halal food ingredient and E-Code analysis project. It uses a curated knowledge base, ingredient matching and a rule-based decision layer to explain preliminary results.")
+    st.markdown("**Project Developer**")
+    st.write("Asad Ullah Muzammil")
+    st.markdown("""
+    <div class="panel">
+      <b>Important Disclaimer</b><br><br>
+      Food Inspector is an educational reference only. It is not Halal certification
+      and does not issue a fatwa. Ingredient sources, manufacturing processes,
+      contamination risks and scholarly assessments may differ. Verify uncertain
+      products with a qualified authority or trusted certification body.
+    </div>
+    """, unsafe_allow_html=True)
+elif page == "guide":
+    if st.button("← Back", key="guide_back"):
+        navigate("home")
+    st.markdown("## Ingredient & Status Guide")
+    st.markdown("""
+    - **HALAL:** Generally permissible based on the available ingredient information.
+    - **HARAM:** Identified as prohibited in the current reference records.
+    - **MASHKOOK:** Source, processing or scholarly assessment requires confirmation.
+    - **UNKNOWN:** The ingredient could not be identified in the current knowledge base.
+    """)
+    st.info("A status is an educational indication, not product certification. For meat-derived ingredients, source and proper Zabiha slaughter may be essential.")
+elif page == "how":
+    if st.button("← Back", key="how_back"):
+        navigate("home")
+    st.markdown("## How Food Inspector Works")
+    st.markdown("""
+    1. **Input:** The user enters an ingredient, ingredient list or E-Code.
+    2. **Matching:** The system compares the text with known ingredient names, aliases and E-Code records.
+    3. **Decision:** A rule-based decision layer evaluates recognized statuses and unidentified items.
+    4. **Explanation:** The result displays the preliminary assessment, ingredient-level reasons and optional reasoning trace.
+    """)
+    st.caption("Matching and rule-based reasoning support educational analysis; they do not replace expert review or certification.")
+elif page == "developer":
+    if st.button("← Back", key="developer_back"):
+        navigate("home")
+    st.markdown("## Developer Dashboard")
+    st.caption("Technical inspection tools are kept separate from the public checker.")
+
+
+if should_check:
     if not text_input.strip():
         st.warning("Bhai, please enter an ingredient or E-Code first.")
     else:
@@ -149,48 +281,36 @@ if st.button("🔍 Check Status", use_container_width=True):
                     st.write(candidate["name"] + " · " + candidate["status"])
         st.caption("This parser separates typical comma, semicolon and line-separated lists. Complex ingredient descriptions may still require manual review.")
 
-st.markdown("---")
-st.markdown("### 📘 Status categories")
-st.markdown("""
-- **HALAL:** Generally permissible based on available ingredient information.
-- **HARAM:** Identified as prohibited.
-- **MASHKOOK:** Source, process, or scholarly assessment requires caution.
-- **UNKNOWN:** Ingredient could not be matched; more information is needed.
-""")
-st.markdown("""
-<div class="panel">
-<b>🕌 A note of caution</b><br><br>
-This educational reference is not a fatwa or Halal certification. Sources, processing,
-certification, and scholarly opinions may differ. For beef or chicken, Halal status
-requires proper Zabiha slaughter and avoidance of prohibited contamination.
-</div>
-""", unsafe_allow_html=True)
-st.markdown("<br><p style='text-align:center;color:#567066'>Food Inspector · Halal Food Awareness & Ingredient Analysis</p>",unsafe_allow_html=True)
+elif page == "developer":
+    with st.expander("Knowledge Base Preview", expanded=True):
+        st.write("Reference database counts and example records.")
+        st.write("Some classifications are intentionally cautious or source-dependent.")
+        st.json({"summary":summary,"example_e_codes":list(E_CODES)[:12],"example_ingredients":list(INGREDIENTS)[:12]})
 
-with st.expander("Knowledge Base Preview (Developer Preview)"):
-    st.write("Reference database counts and example records.")
-    st.write("Some classifications are intentionally cautious or source-dependent.")
-    st.json({"summary":summary,"example_e_codes":list(E_CODES)[:12],"example_ingredients":list(INGREDIENTS)[:12]})
+    with st.expander("🛠️ Developer Audit · Stage 6"):
+        audit = audit_rules_and_data()
+        st.metric("Rules inspected", audit["rule_count"])
+        st.metric("Knowledge facts inspected", audit["fact_count"])
+        if audit["issues"]:
+            st.error("Audit issues detected")
+            for issue in audit["issues"]:
+                st.write("• " + issue)
+        else:
+            st.success("No structural errors detected by this audit.")
+        if audit["warnings"]:
+            st.warning("Warnings")
+            for warning in audit["warnings"]:
+                st.write("• " + warning)
+        st.markdown("#### Automated decision tests")
+        for test in audit["tests"]:
+            st.write(("✅ PASS" if test["passed"] else "❌ FAIL") + " · " + test["name"] + " · Expected " + test["expected"] + " / Got " + test["actual"] + " (" + test["rule"] + ")")
+        st.markdown("#### Rule register")
+        for rule in sorted(audit["rules"], key=lambda r: r["priority"], reverse=True):
+            st.write(rule["id"] + " · Priority " + str(rule["priority"]) + " · " + rule["when"] + " → " + rule["conclusion"])
+            st.caption(rule["explanation"])
 
-
-with st.expander("🛠️ Developer Audit · Stage 6"):
-    audit = audit_rules_and_data()
-    st.metric("Rules inspected", audit["rule_count"])
-    st.metric("Knowledge facts inspected", audit["fact_count"])
-    if audit["issues"]:
-        st.error("Audit issues detected")
-        for issue in audit["issues"]:
-            st.write("• " + issue)
-    else:
-        st.success("No structural errors detected by this audit.")
-    if audit["warnings"]:
-        st.warning("Warnings")
-        for warning in audit["warnings"]:
-            st.write("• " + warning)
-    st.markdown("#### Automated decision tests")
-    for test in audit["tests"]:
-        st.write(("✅ PASS" if test["passed"] else "❌ FAIL") + " · " + test["name"] + " · Expected " + test["expected"] + " / Got " + test["actual"] + " (" + test["rule"] + ")")
-    st.markdown("#### Rule register")
-    for rule in sorted(audit["rules"], key=lambda r: r["priority"], reverse=True):
-        st.write(rule["id"] + " · Priority " + str(rule["priority"]) + " · " + rule["when"] + " → " + rule["conclusion"])
-        st.caption(rule["explanation"])
+if page != "home":
+    st.markdown("---")
+    if st.button("⌂ Home", key="footer_home"):
+        navigate("home")
+st.markdown("<p style='text-align:center;color:#789084;font-size:12px'>Food Inspector · Halal Food Awareness &amp; Ingredient Analysis</p>", unsafe_allow_html=True)
