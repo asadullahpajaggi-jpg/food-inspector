@@ -78,7 +78,7 @@ if st.button("🔍 Check Status", use_container_width=True):
           document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable';}};
         </script>
         """.replace("REPORT_PLACEHOLDER", safe_report)
-        components.html(html_template, height=800)
+        components.html(html_template, height=400)
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
         c1.metric("HALAL", counts["HALAL"])
