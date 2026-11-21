@@ -84,11 +84,12 @@ if st.button("🔍 Check Status", use_container_width=True):
           document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable';}};
         </script>
         """.replace("REPORT_PLACEHOLDER", safe_report).replace("MAIN_PLACEHOLDER", json.dumps(main_report)).replace("DISCLAIMER_PLACEHOLDER", json.dumps(disclaimer))
-        # Estimate the embedded result panel height from the text length to avoid clipping or excess blank space.
-        approx_chars_per_line = 92
+        # Conservative height estimate: embedded HTML iframe cannot auto-size to its content.
+        # Account for wrapped lines at the narrow mobile viewport as well as padding and disclaimer.
+        approx_chars_per_line = 48
         estimated_main_lines = max(1, (len(main_report) + approx_chars_per_line - 1) // approx_chars_per_line)
         estimated_disclaimer_lines = max(1, (len(disclaimer) + approx_chars_per_line - 1) // approx_chars_per_line)
-        result_panel_height = max(190, min(900, 70 + estimated_main_lines * 27 + estimated_disclaimer_lines * 22 + 35))
+        result_panel_height = max(240, min(1600, 115 + estimated_main_lines * 30 + estimated_disclaimer_lines * 25))
         components.html(html_template, height=result_panel_height)
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
