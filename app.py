@@ -68,9 +68,9 @@ if st.button("🔍 Check Status", use_container_width=True):
         import json
         safe_report = json.dumps(report_text)
         html_template = """
-        <div style="font-family:sans-serif;position:relative;border:1px solid rgba(128,128,128,.35);border-radius:12px;padding:18px 48px 18px 16px;line-height:1.65;overflow-wrap:anywhere;">
-          <button id="copyResult" title="Copy result" aria-label="Copy result" style="position:absolute;top:10px;right:10px;border:0;background:transparent;cursor:pointer;font-size:18px;">📋</button>
-          <div id="resultText"></div><span id="copyMsg" style="font-size:12px;"></span>
+        <div style="font-family:sans-serif;position:relative;background:#ffffff;color:#202124;border:1px solid #c8cdd2;border-radius:12px;padding:20px 52px 22px 18px;line-height:1.7;overflow-wrap:anywhere;min-height:150px;">
+          <button id="copyResult" title="Copy result" aria-label="Copy result" style="position:absolute;top:10px;right:10px;border:0;background:#f1f3f4;color:#202124;border-radius:8px;padding:6px;cursor:pointer;font-size:18px;">📋</button>
+          <div id="resultText" style="color:#202124 !important;font-size:16px;font-weight:400;white-space:normal;"></div><span id="copyMsg" style="font-size:12px;color:#202124;"></span>
         </div>
         <script>
           const report = REPORT_PLACEHOLDER;
@@ -78,7 +78,7 @@ if st.button("🔍 Check Status", use_container_width=True):
           document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable';}};
         </script>
         """.replace("REPORT_PLACEHOLDER", safe_report)
-        components.html(html_template, height=170)
+        components.html(html_template, height=360)
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
         c1.metric("HALAL", counts["HALAL"])
