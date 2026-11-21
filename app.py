@@ -51,8 +51,38 @@ if st.button("🔍 Check Status", use_container_width=True):
         parsed = label_report["parsed"]
         decision = label_report["decision"]
         result = {**parsed, **decision}
+        # Build a concise, natural-language report for users to copy.
+        report_lines = ["FOOD INSPECTOR — INGREDIENT REVIEW", ""]
+        report_lines.append("Preliminary result: " + result["status"])
+        if result["status"] == "HALAL":
+            report_lines.append("The recognized ingredients are generally considered permissible based on this reference database.")
+        elif result["status"] == "HARAM":
+            report_lines.append("A prohibited ingredient was identified in the reference database.")
+        elif result["status"] == "MASHKOOK":
+            report_lines.append("One or more ingredients require further source, processing, or scholarly verification.")
+        else:
+            report_lines.append("Some ingredients could not be identified with confidence. Unknown ingredients should not be assumed permissible or prohibited.")
+        report_lines.append("")
+        report_lines.append("Recognized ingredients:")
+        if result["matches"]:
+            for item in result["matches"]:
+                report_lines.append("- " + item["name"] + " (" + item["status"] + "): " + item["reason"])
+        else:
+            report_lines.append("- No recognized ingredients.")
+        if result["unknown"]:
+            report_lines.extend(["", "Unidentified items:"])
+            report_lines.extend(["- " + item for item in result["unknown"]])
+        if label_report["advisories"]:
+            report_lines.extend(["", "Precautionary label statements:"])
+            report_lines.extend(["- " + item for item in label_report["advisories"]])
+        report_lines.extend(["", "This is an educational preliminary assessment, not Halal certification or a fatwa. Ingredient sources, manufacturing processes, contamination risks, and scholarly views may differ. Meat ingredients require verification of proper Zabiha slaughter."])
+        copy_report = "\\n".join(report_lines)
+
         st.markdown("## Preliminary assessment")
         st.write(label_report["summary"])
+        st.markdown("### 📋 Readable report (copy below)")
+        st.text_area("Copyable report", value=copy_report, height=260, disabled=False, key="copyable_report")
+
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
         c1.metric("Generally Halal matches", counts["HALAL"])
