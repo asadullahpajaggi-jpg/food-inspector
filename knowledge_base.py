@@ -12,6 +12,7 @@ INGREDIENTS = {
     "lard": {"status":"HARAM","group":"animal_source","aliases":["pig fat","pork fat"],"reason":"Lard is pig fat."},
     "blood": {"status":"HARAM","group":"animal_source","aliases":["blood plasma","blood meal"],"reason":"Consumption of blood is prohibited; industrial ingredient context may require exact identification."},
     "alcohol_beverage": {"status":"HARAM","group":"alcohol","aliases":["wine","beer","liquor","spirits"],"reason":"Intoxicating alcoholic beverages are prohibited."},
+    "alcohol": {"status":"MASHKOOK","group":"alcohol","aliases":["ethanol","ethyl alcohol"],"reason":"Alcohol used as an ingredient may have different sources, uses, amounts, and scholarly assessments; the product context needs confirmation."},
     "wine": {"status":"HARAM","group":"alcohol","aliases":["red wine","white wine"],"reason":"Wine is an intoxicating beverage."},
     "rum": {"status":"HARAM","group":"alcohol","aliases":["rum flavour base"],"reason":"Rum is an alcoholic spirit; flavouring ingredient context should be checked."},
     "brandy": {"status":"HARAM","group":"alcohol","aliases":[],"reason":"Brandy is an alcoholic spirit."},
