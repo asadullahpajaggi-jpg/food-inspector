@@ -21,9 +21,9 @@ def _records():
 RECORDS = _records()
 
 def _segments(raw):
-    text = re.sub(r"(?i)\\b(ingredients?|ingredient list)\\s*[:：]", "", str(raw))
-    text = re.sub(r"(?i)\\b(may contain|contains traces of)\\b", " ", text)
-    return [s.strip(" .:-()[]{}") for s in re.split(r"[,;\\n\\r•]+", text) if s.strip(" .:-()[]{}")]
+    text = re.sub(r"(?i)\b(ingredients?|ingredient list)\s*[:：]", "", str(raw))
+    text = re.sub(r"(?i)\b(may contain|contains traces of)\b", " ", text)
+    return [s.strip(" .:-()[]{}") for s in re.split(r"[,;\n\r•]+", text) if s.strip(" .:-()[]{}")]
 
 def analyze_input(raw):
     segments = _segments(raw)
@@ -55,7 +55,7 @@ def analyze_input(raw):
                 matches.append({k:record[k] for k in ("name","status","reason","type")})
             segment_hits.append(record)
         if not segment_hits:
-            residual = re.sub(r"\\b(ingredients?|contains|may contain|made with)\\b", "", normalized).strip()
+            residual = re.sub(r"\b(ingredients?|contains|may contain|made with)\b", "", normalized).strip()
             if residual and residual not in seen_unknown:
                 seen_unknown.add(residual)
                 unknown.append(segment)
