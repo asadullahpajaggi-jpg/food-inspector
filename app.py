@@ -52,104 +52,51 @@ if st.button("🔍 Check Status", use_container_width=True):
         decision = label_report["decision"]
         result = {**parsed, **decision}
         status = result["status"]
-        if status == "HALAL":
-            intro = "Based on the ingredients identified, this ingredient list is generally considered permissible."
-        elif status == "HARAM":
-            intro = "This ingredient list contains an ingredient identified as prohibited in the reference."
-        elif status == "MASHKOOK":
-            intro = "This ingredient list contains an ingredient whose source or processing needs confirmation."
-        else:
-            intro = "Some ingredients could not be identified, so the list needs further checking."
+        intro = {
+            "HALAL": "Based on the ingredients identified, this ingredient list is generally considered permissible.",
+            "HARAM": "This ingredient list contains an ingredient identified as prohibited in the reference.",
+            "MASHKOOK": "This ingredient list contains an ingredient whose source or processing needs confirmation.",
+            "UNKNOWN": "Some ingredients could not be identified, so the list needs further checking."
+        }.get(status, "The ingredient list needs further checking.")
         findings = "; ".join(item["name"] + " (" + item["status"] + "): " + item["reason"] for item in result["matches"])
         if result["unknown"]:
             findings += ("; " if findings else "") + "Unidentified: " + ", ".join(result["unknown"])
-        report_text = intro + (" " + findings if findings else "")
-        report_text += " This is an educational reference, not Halal certification or a fatwa."
+        report_text = intro + (" " + findings if findings else "") + " This is an educational reference, not Halal certification or a fatwa."
         st.markdown("## Ingredient assessment")
         st.markdown("### Result")
         import streamlit.components.v1 as components
         import json
         safe_report = json.dumps(report_text)
-        components.html("""
-        <div style="font-family: sans-serif; position:relative; border:1px solid rgba(128,128,128,.35);border-radius:12px;padding:18px 48px 18px 16px;line-height:1.65;overflow-wrap:anywhere;">
+        html_template = """
+        <div style="font-family:sans-serif;position:relative;border:1px solid rgba(128,128,128,.35);border-radius:12px;padding:18px 48px 18px 16px;line-height:1.65;overflow-wrap:anywhere;">
           <button id="copyResult" title="Copy result" aria-label="Copy result" style="position:absolute;top:10px;right:10px;border:0;background:transparent;cursor:pointer;font-size:18px;">📋</button>
           <div id="resultText"></div><span id="copyMsg" style="font-size:12px;"></span>
         </div>
         <script>
-          const report = """ + safe_report + """;
+          const report = REPORT_PLACEHOLDER;
           document.getElementById('resultText').textContent=report;
-          document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable in this browser';}};
+          document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable';}};
         </script>
-        """, height=170)
-        st.markdown("### Assessment counts")
+        """.replace("REPORT_PLACEHOLDER", safe_report)
+        components.html(html_template, height=170)
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
         c1.metric("HALAL", counts["HALAL"])
         c2.metric("MASHKOOK", counts["MASHKOOK"])
         c3.metric("HARAM", counts["HARAM"])
-        counts = label_report["counts"]
-        c1,c2,c3 = st.columns(3)
-        c1.metric("HALAL", counts["HALAL"])
-        c2.metric("MASHKOOK", counts["MASHKOOK"])
-        c3.metric("HARAM", counts["HARAM"])
-        st.markdown("### Result")
-        st.markdown(intro)
-        st.markdown("#### Ingredient findings")
-        for item in result["matches"]:
-            st.markdown("**" + item["name"] + " — " + item["status"] + "**")
-            st.caption(item["reason"])
-        if result["unknown"]:
-            st.markdown("#### Not identified")
-            st.write(", ".join(result["unknown"]))
-        st.markdown("#### 📋 Copy report")
-        st.code(copy_report, language=None)
-        counts = label_report["counts"]
-        c1,c2,c3 = st.columns(3)
-        c1.metric("Generally Halal matches", counts["HALAL"])
-        c2.metric("Doubtful matches", counts["MASHKOOK"])
-        c3.metric("Haram matches", counts["HARAM"])
         if label_report["advisories"]:
-            st.warning("Precautionary label statements detected separately (not treated as direct ingredients):")
+            st.warning("Precautionary label statements detected separately:")
             for advisory in label_report["advisories"]:
                 st.write("• " + advisory)
-            st.caption("These statements indicate possible exposure or shared-facility risk, not proof that the listed substance is a direct ingredient. Seek product-specific clarification.")
-        st.subheader(result["status"])
-        st.write(result["rule_explanation"])
         with st.expander("🧠 Technical reasoning (optional)", expanded=False):
             for step in result["trace"]:
                 st.write("**Step " + str(step["step"]) + " · " + step["type"] + "** — " + step["detail"])
             st.caption("Rule fired: " + result["rule_id"] + " · Priority: " + str(result["priority"]))
-        if result["status"] == "HARAM":
-            st.error("A matched prohibited item was found in this reference dataset.")
-        elif result["status"] == "MASHKOOK":
-            st.warning("At least one matched item needs source, process, or scholarly confirmation. Exercise caution.")
-        elif result["status"] == "UNKNOWN":
-            st.info("The list contains unrecognized items, or no matching records. Unknown does not mean Halal or Haram.")
-        elif result["status"] == "HALAL":
-            st.success("All recognized list segments matched entries marked generally permissible in this reference database. This is not certification.")
-
-        if result["matches"]:
-            st.markdown("### Matched ingredients")
-            for item in result["matches"]:
-                with st.expander(f"{item['status']} · {item['name']}", expanded=True):
-                    st.caption(item["type"])
-                    st.write(item["reason"])
         if result["unknown"]:
-            st.markdown("### ⚠️ Items needing identification")
-            for item in result["unknown"]:
-                st.write(f"• **{item}**")
-            st.caption("These segments were not recognized in the current database. Please verify them; they are not automatically classified.")
-            smart_suggestions = suggest_matches(result["unknown"])
-            for suggestion in smart_suggestions:
-                if suggestion["candidates"]:
-                    st.markdown("**Possible matches for: " + suggestion["input"] + "**")
-                    for candidate in suggestion["candidates"]:
-                        st.write(candidate["name"] + " · " + candidate["status"] + " · Similarity " + str(candidate["similarity"]))
-                        st.caption(candidate["reason"])
-                else:
-                    st.caption("No close suggestion found for: " + suggestion["input"])
-        if not result["matches"] and not result["unknown"]:
-            st.warning("No usable ingredient segments were detected.")
+            st.caption("Unidentified items: " + ", ".join(result["unknown"]))
+            for suggestion in suggest_matches(result["unknown"]):
+                for candidate in suggestion.get("candidates", []):
+                    st.write(candidate["name"] + " · " + candidate["status"])
         st.caption("This parser separates typical comma, semicolon and line-separated lists. Complex ingredient descriptions may still require manual review.")
 
 st.markdown("---")
