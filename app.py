@@ -51,27 +51,42 @@ if st.button("🔍 Check Status", use_container_width=True):
         parsed = label_report["parsed"]
         decision = label_report["decision"]
         result = {**parsed, **decision}
-        # Prepare a compact, copyable report using Streamlit's built-in copy button.
         status = result["status"]
         if status == "HALAL":
-            intro = "Based on the ingredients identified and the reference information available, the listed ingredients are generally considered permissible."
+            intro = "Based on the ingredients identified, this ingredient list is generally considered permissible."
         elif status == "HARAM":
-            intro = "The ingredient list includes an item identified as prohibited in this reference."
+            intro = "This ingredient list contains an ingredient identified as prohibited in the reference."
         elif status == "MASHKOOK":
-            intro = "The ingredient list includes one or more ingredients whose source or production details need checking before a Halal conclusion can be made."
+            intro = "This ingredient list contains an ingredient whose source or processing needs confirmation."
         else:
-            intro = "We could not identify every ingredient in this list. Please check the unidentified items before making a Halal decision."
-        report_lines = ["FOOD INSPECTOR — RESULT", "", status, "", intro, "", "Ingredient findings:"]
-        for item in result["matches"]:
-            report_lines.append("- " + item["name"] + ": " + item["reason"])
+            intro = "Some ingredients could not be identified, so the list needs further checking."
+        findings = "; ".join(item["name"] + " (" + item["status"] + "): " + item["reason"] for item in result["matches"])
         if result["unknown"]:
-            report_lines.extend(["", "Not identified:"] + ["- " + item for item in result["unknown"]])
-        if label_report["advisories"]:
-            report_lines.extend(["", "Precautionary label information:"] + ["- " + item for item in label_report["advisories"]])
-        report_lines.extend(["", "This is an educational reference only, not Halal certification or a fatwa. Product-specific sourcing, processing, and contamination details may affect the assessment."])
-        copy_report = "\\n".join(report_lines)
-
+            findings += ("; " if findings else "") + "Unidentified: " + ", ".join(result["unknown"])
+        report_text = intro + (" " + findings if findings else "")
+        report_text += " This is an educational reference, not Halal certification or a fatwa."
         st.markdown("## Ingredient assessment")
+        st.markdown("### Result")
+        import streamlit.components.v1 as components
+        import json
+        safe_report = json.dumps(report_text)
+        components.html("""
+        <div style="font-family: sans-serif; position:relative; border:1px solid rgba(128,128,128,.35);border-radius:12px;padding:18px 48px 18px 16px;line-height:1.65;overflow-wrap:anywhere;">
+          <button id="copyResult" title="Copy result" aria-label="Copy result" style="position:absolute;top:10px;right:10px;border:0;background:transparent;cursor:pointer;font-size:18px;">📋</button>
+          <div id="resultText"></div><span id="copyMsg" style="font-size:12px;"></span>
+        </div>
+        <script>
+          const report = """ + safe_report + """;
+          document.getElementById('resultText').textContent=report;
+          document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable in this browser';}};
+        </script>
+        """, height=170)
+        st.markdown("### Assessment counts")
+        counts = label_report["counts"]
+        c1,c2,c3 = st.columns(3)
+        c1.metric("HALAL", counts["HALAL"])
+        c2.metric("MASHKOOK", counts["MASHKOOK"])
+        c3.metric("HARAM", counts["HARAM"])
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
         c1.metric("HALAL", counts["HALAL"])
