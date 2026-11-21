@@ -45,10 +45,21 @@ if st.button("🔍 Check Status", use_container_width=True):
         st.warning("Bhai, please enter an ingredient or E-Code first.")
     else:
         label_report = analyze_label(text_input)
-        parsed = label_report[\"parsed\"]
-        decision = label_report[\"decision\"]
+        parsed = label_report["parsed"]
+        decision = label_report["decision"]
         result = {**parsed, **decision}
-        st.markdown("## Preliminary assessment")\n        st.write(label_report[\"summary\"])\n        counts = label_report[\"counts\"]\n        c1,c2,c3 = st.columns(3)\n        c1.metric("Generally Halal matches", counts[\"HALAL\"])\n        c2.metric("Doubtful matches", counts[\"MASHKOOK\"])\n        c3.metric("Haram matches", counts[\"HARAM\"])\n        if label_report[\"advisories\"]:\n            st.warning("Precautionary label statements detected separately (not treated as direct ingredients):")\n            for advisory in label_report[\"advisories\"]:\n                st.write("• " + advisory)\n            st.caption("These statements indicate possible exposure or shared-facility risk, not proof that the listed substance is a direct ingredient. Seek product-specific clarification.")
+        st.markdown("## Preliminary assessment")
+        st.write(label_report["summary"])
+        counts = label_report["counts"]
+        c1,c2,c3 = st.columns(3)
+        c1.metric("Generally Halal matches", counts["HALAL"])
+        c2.metric("Doubtful matches", counts["MASHKOOK"])
+        c3.metric("Haram matches", counts["HARAM"])
+        if label_report["advisories"]:
+            st.warning("Precautionary label statements detected separately (not treated as direct ingredients):")
+            for advisory in label_report["advisories"]:
+                st.write("• " + advisory)
+            st.caption("These statements indicate possible exposure or shared-facility risk, not proof that the listed substance is a direct ingredient. Seek product-specific clarification.")
         st.subheader(result["status"])
         st.write(result["rule_explanation"])
         with st.expander("🧠 Reasoning Trace", expanded=True):
@@ -74,7 +85,16 @@ if st.button("🔍 Check Status", use_container_width=True):
             st.markdown("### ⚠️ Items needing identification")
             for item in result["unknown"]:
                 st.write(f"• **{item}**")
-            st.caption("These segments were not recognized in the current database. Please verify them; they are not automatically classified.")\n            smart_suggestions = suggest_matches(result["unknown"])\n            for suggestion in smart_suggestions:\n                if suggestion["candidates"]:\n                    st.markdown("**Possible matches for: " + suggestion["input"] + "**")\n                    for candidate in suggestion["candidates"]:\n                        st.write(candidate["name"] + " · " + candidate["status"] + " · Similarity " + str(candidate["similarity"]))\n                        st.caption(candidate["reason"])\n                else:\n                    st.caption("No close suggestion found for: " + suggestion["input"])
+            st.caption("These segments were not recognized in the current database. Please verify them; they are not automatically classified.")
+            smart_suggestions = suggest_matches(result["unknown"])
+            for suggestion in smart_suggestions:
+                if suggestion["candidates"]:
+                    st.markdown("**Possible matches for: " + suggestion["input"] + "**")
+                    for candidate in suggestion["candidates"]:
+                        st.write(candidate["name"] + " · " + candidate["status"] + " · Similarity " + str(candidate["similarity"]))
+                        st.caption(candidate["reason"])
+                else:
+                    st.caption("No close suggestion found for: " + suggestion["input"])
         if not result["matches"] and not result["unknown"]:
             st.warning("No usable ingredient segments were detected.")
         st.caption("This parser separates typical comma, semicolon and line-separated lists. Complex ingredient descriptions may still require manual review.")
