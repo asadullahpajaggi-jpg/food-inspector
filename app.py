@@ -85,8 +85,8 @@ if st.button("🔍 Check Status", use_container_width=True):
             )
             plain_parts.append("Other unidentified ingredients also need checking: " + unknown_text + ".")
         card_parts.append('<div class="disclaimer">' + html.escape(disclaimer) + '</div>')
-        main_report = "\\n\\n".join(plain_parts)
-        report_text = main_report + "\\n\\n" + disclaimer
+        main_report = "\n\n".join(plain_parts)
+        report_text = main_report + "\n\n" + disclaimer
         st.markdown("## Ingredient assessment")
         st.markdown("### Result")
         import streamlit.components.v1 as components
@@ -105,8 +105,7 @@ if st.button("🔍 Check Status", use_container_width=True):
           .ingredient-heading strong { font-size:15px; }
           .status { font-size:11px; font-weight:800; border-radius:20px; padding:4px 9px; }
           .halal { color:#17643b; background:#e7f5ec; }
-          .mashkoook, .mashko k { color:#805500; background:#fff3d5; }
-          .mashko ok { color:#805500; background:#fff3d5; }
+          .mashkook { color:#805500; background:#fff3d5; }
           .haram { color:#a32222; background:#fdeaea; }
           .unknown { color:#6541a5; background:#f1eafe; }
           .reason { font-size:13px; color:#4b5563; margin-top:7px; }
