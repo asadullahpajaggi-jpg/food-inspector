@@ -93,6 +93,10 @@ if page == "home":
         if st.button("ℹ️ About", key="home_about", use_container_width=True):
             navigate("about")
 
+    st.caption("Project maintenance")
+    if st.button("🛠️ Developer Dashboard", key="home_developer"):
+        navigate("developer")
+
 elif page == "checker":
     back_col, title_col = st.columns([1, 5])
     with back_col:
@@ -309,8 +313,4 @@ elif page == "developer":
             st.write(rule["id"] + " · Priority " + str(rule["priority"]) + " · " + rule["when"] + " → " + rule["conclusion"])
             st.caption(rule["explanation"])
 
-if page != "home":
-    st.markdown("---")
-    if st.button("⌂ Home", key="footer_home"):
-        navigate("home")
 st.markdown("<p style='text-align:center;color:#789084;font-size:12px'>Food Inspector · Halal Food Awareness &amp; Ingredient Analysis</p>", unsafe_allow_html=True)
