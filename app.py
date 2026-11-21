@@ -1,6 +1,7 @@
 import streamlit as st
 from knowledge_base import INGREDIENTS, E_CODES, FACTS, knowledge_base_summary
-from matcher import analyze_input\nfrom decision_engine import decide
+from matcher import analyze_input
+from decision_engine import decide
 
 st.set_page_config(page_title="Food Inspector | Halal & E-Code Checker", page_icon="🍽️", layout="centered")
 
@@ -40,7 +41,9 @@ if st.button("🔍 Check Status", use_container_width=True):
     if not text_input.strip():
         st.warning("Bhai, please enter an ingredient or E-Code first.")
     else:
-        parsed = analyze_input(text_input)\n        decision = decide(parsed)\n        result = {**parsed, **decision}
+        parsed = analyze_input(text_input)
+        decision = decide(parsed)
+        result = {**parsed, **decision}
         st.markdown("## Preliminary assessment")
         st.subheader(result["status"])
         st.write(result["rule_explanation"])
