@@ -84,7 +84,12 @@ if st.button("🔍 Check Status", use_container_width=True):
           document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable';}};
         </script>
         """.replace("REPORT_PLACEHOLDER", safe_report).replace("MAIN_PLACEHOLDER", json.dumps(main_report)).replace("DISCLAIMER_PLACEHOLDER", json.dumps(disclaimer))
-        components.html(html_template, height=400)
+        # Estimate the embedded result panel height from the text length to avoid clipping or excess blank space.
+        approx_chars_per_line = 92
+        estimated_main_lines = max(1, (len(main_report) + approx_chars_per_line - 1) // approx_chars_per_line)
+        estimated_disclaimer_lines = max(1, (len(disclaimer) + approx_chars_per_line - 1) // approx_chars_per_line)
+        result_panel_height = max(190, min(900, 70 + estimated_main_lines * 27 + estimated_disclaimer_lines * 22 + 35))
+        components.html(html_template, height=result_panel_height)
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
         c1.metric("HALAL", counts["HALAL"])
