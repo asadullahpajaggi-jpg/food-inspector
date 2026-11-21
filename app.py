@@ -6,6 +6,7 @@ from decision_engine import decide
 from rule_audit import audit_rules_and_data
 from smart_match import suggest_matches
 from label_analysis import analyze_label
+from performance_evaluation import run_performance_evaluation
 
 st.set_page_config(page_title="Food Inspector | Halal & E-Code Checker", page_icon="🍽️", layout="centered")
 
@@ -318,5 +319,23 @@ elif page == "developer":
         for rule in sorted(audit["rules"], key=lambda r: r["priority"], reverse=True):
             st.write(rule["id"] + " · Priority " + str(rule["priority"]) + " · " + rule["when"] + " → " + rule["conclusion"])
             st.caption(rule["explanation"])
+
+    with st.expander("📊 Performance Evaluation · Stage 14", expanded=False):
+        st.caption("Curated repeatable checks of matching, unknown detection and decision outcomes. These are test-suite results, not real-world accuracy.")
+        evaluation = run_performance_evaluation()
+        e1, e2, e3 = st.columns(3)
+        e1.metric("Cases passed", str(evaluation["passed"]) + " / " + str(evaluation["total"]))
+        e2.metric("Test pass rate", f'{evaluation["pass_rate"]:.1f}%')
+        e3.metric("Failed cases", evaluation["failed"])
+        e4, e5, e6 = st.columns(3)
+        e4.metric("Mean run time", f'{evaluation["mean_ms"]:.3f} ms')
+        e5.metric("Fastest", f'{evaluation["min_ms"]:.3f} ms')
+        e6.metric("Slowest", f'{evaluation["max_ms"]:.3f} ms')
+        st.markdown("#### Case results")
+        for row in evaluation["rows"]:
+            st.write(("✅ PASS" if row["passed"] else "❌ FAIL") + " · " + row["name"])
+            st.caption("Expected: " + row["expected_status"] + " | Actual: " + row["actual_status"] + " | " + f'{row["time_ms"]:.3f} ms')
+            if not row["passed"]:
+                st.caption("Recognized expected/actual: " + str(row["recognized_expected"]) + " / " + str(row["recognized_actual"]) + " · Unknown expected/actual: " + str(row["unknown_expected"]) + " / " + str(row["unknown_actual"]))
 
 st.markdown("<p style='text-align:center;color:#789084;font-size:12px'>Food Inspector · Halal Food Awareness &amp; Ingredient Analysis</p>", unsafe_allow_html=True)
