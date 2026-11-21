@@ -8,39 +8,49 @@ def _phrase_match(text, phrase):
     phrase = _clean(phrase)
     if not phrase:
         return False
-    # Match normalized phrases at word boundaries, not inside unrelated words.
     return re.search(r"(?<![a-z0-9])" + re.escape(phrase) + r"(?![a-z0-9])", text) is not None
 
-def analyze_input(raw):
-    text = _clean(raw)
-    found = []
-    seen = set()
-
+def _records():
+    records = []
     for code, data in E_CODES.items():
-        candidates = [code, data.get("name", "")] + data.get("aliases", [])
-        if any(_phrase_match(text, c) for c in candidates if c):
-            key = ("e_code", code)
-            if key not in seen:
-                seen.add(key)
-                found.append({"name": code + " — " + data["name"], "status": data["status"], "reason": data["reason"], "type": "E-Code"})
-
+        records.append({"key":"ec:"+code, "name":code+" — "+data["name"], "status":data["status"], "reason":data["reason"], "type":"E-Code", "aliases":[code,data["name"]]+data.get("aliases",[])})
     for name, data in INGREDIENTS.items():
-        candidates = [name.replace("_", " ")] + data.get("aliases", [])
-        if any(_phrase_match(text, c) for c in candidates if c):
-            key = ("ingredient", name)
-            if key not in seen:
-                seen.add(key)
-                found.append({"name": name.replace("_", " ").title(), "status": data["status"], "reason": data["reason"], "type": "Ingredient/Product"})
+        records.append({"key":"ing:"+name, "name":name.replace("_"," ").title(), "status":data["status"], "reason":data["reason"], "type":"Ingredient/Product", "aliases":[name.replace("_"," ")]+data.get("aliases",[])})
+    return records
 
-    # Deduplicate records whose aliases point to the same E-Code ingredient.
-    status = "UNKNOWN"
-    if found:
-        statuses = {item["status"] for item in found}
-        if "HARAM" in statuses:
-            status = "HARAM"
-        elif "MASHKOOK" in statuses:
-            status = "MASHKOOK"
-        else:
-            status = "HALAL"
+RECORDS = _records()
 
-    return {"status": status, "matches": found}
+def analyze_input(raw):
+    # Split typical ingredient-list punctuation into individual segments.
+    segments = [s.strip(" .:-()[]") for s in re.split(r"[,;\n\r•]+", str(raw)) if s.strip(" .:-()[]")]
+    if not segments:
+        segments = [str(raw).strip()]
+    matches, unknown, seen = [], [], set()
+    for segment in segments:
+        normalized = _clean(segment)
+        segment_hits = []
+        for record in RECORDS:
+            if any(_phrase_match(normalized, alias) for alias in record["aliases"] if alias):
+                if record["key"] not in seen:
+                    seen.add(record["key"])
+                    matches.append({k:record[k] for k in ("name","status","reason","type")})
+                segment_hits.append(record)
+        if not segment_hits:
+            # Remove common label phrases, then flag any remaining segment for review.
+            residual = re.sub(r"\b(ingredients?|contains|may contain|made with)\b", "", normalized).strip()
+            if residual:
+                unknown.append(segment)
+
+    statuses = {item["status"] for item in matches}
+    if "HARAM" in statuses:
+        overall = "HARAM"
+    elif "MASHKOOK" in statuses:
+        overall = "MASHKOOK"
+    elif unknown:
+        overall = "UNKNOWN"
+    elif matches:
+        overall = "HALAL"
+    else:
+        overall = "UNKNOWN"
+
+    return {"status":overall, "matches":matches, "unknown":unknown, "segments":segments}
