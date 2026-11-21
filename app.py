@@ -51,38 +51,43 @@ if st.button("🔍 Check Status", use_container_width=True):
         parsed = label_report["parsed"]
         decision = label_report["decision"]
         result = {**parsed, **decision}
-        # Build a concise, natural-language report for users to copy.
-        report_lines = ["FOOD INSPECTOR — INGREDIENT REVIEW", ""]
-        report_lines.append("Preliminary result: " + result["status"])
-        if result["status"] == "HALAL":
-            report_lines.append("The recognized ingredients are generally considered permissible based on this reference database.")
-        elif result["status"] == "HARAM":
-            report_lines.append("A prohibited ingredient was identified in the reference database.")
-        elif result["status"] == "MASHKOOK":
-            report_lines.append("One or more ingredients require further source, processing, or scholarly verification.")
+        # Prepare a compact, copyable report using Streamlit's built-in copy button.
+        status = result["status"]
+        if status == "HALAL":
+            intro = "Based on the ingredients identified and the reference information available, the listed ingredients are generally considered permissible."
+        elif status == "HARAM":
+            intro = "The ingredient list includes an item identified as prohibited in this reference."
+        elif status == "MASHKOOK":
+            intro = "The ingredient list includes one or more ingredients whose source or production details need checking before a Halal conclusion can be made."
         else:
-            report_lines.append("Some ingredients could not be identified with confidence. Unknown ingredients should not be assumed permissible or prohibited.")
-        report_lines.append("")
-        report_lines.append("Recognized ingredients:")
-        if result["matches"]:
-            for item in result["matches"]:
-                report_lines.append("- " + item["name"] + " (" + item["status"] + "): " + item["reason"])
-        else:
-            report_lines.append("- No recognized ingredients.")
+            intro = "We could not identify every ingredient in this list. Please check the unidentified items before making a Halal decision."
+        report_lines = ["FOOD INSPECTOR — RESULT", "", status, "", intro, "", "Ingredient findings:"]
+        for item in result["matches"]:
+            report_lines.append("- " + item["name"] + ": " + item["reason"])
         if result["unknown"]:
-            report_lines.extend(["", "Unidentified items:"])
-            report_lines.extend(["- " + item for item in result["unknown"]])
+            report_lines.extend(["", "Not identified:"] + ["- " + item for item in result["unknown"]])
         if label_report["advisories"]:
-            report_lines.extend(["", "Precautionary label statements:"])
-            report_lines.extend(["- " + item for item in label_report["advisories"]])
-        report_lines.extend(["", "This is an educational preliminary assessment, not Halal certification or a fatwa. Ingredient sources, manufacturing processes, contamination risks, and scholarly views may differ. Meat ingredients require verification of proper Zabiha slaughter."])
+            report_lines.extend(["", "Precautionary label information:"] + ["- " + item for item in label_report["advisories"]])
+        report_lines.extend(["", "This is an educational reference only, not Halal certification or a fatwa. Product-specific sourcing, processing, and contamination details may affect the assessment."])
         copy_report = "\\n".join(report_lines)
 
-        st.markdown("## Preliminary assessment")
-        st.write(label_report["summary"])
-        st.markdown("### 📋 Readable report (copy below)")
-        st.text_area("Copyable report", value=copy_report, height=260, disabled=False, key="copyable_report")
-
+        st.markdown("## Ingredient assessment")
+        counts = label_report["counts"]
+        c1,c2,c3 = st.columns(3)
+        c1.metric("HALAL", counts["HALAL"])
+        c2.metric("MASHKOOK", counts["MASHKOOK"])
+        c3.metric("HARAM", counts["HARAM"])
+        st.markdown("### Result")
+        st.markdown(intro)
+        st.markdown("#### Ingredient findings")
+        for item in result["matches"]:
+            st.markdown("**" + item["name"] + " — " + item["status"] + "**")
+            st.caption(item["reason"])
+        if result["unknown"]:
+            st.markdown("#### Not identified")
+            st.write(", ".join(result["unknown"]))
+        st.markdown("#### 📋 Copy report")
+        st.code(copy_report, language=None)
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
         c1.metric("Generally Halal matches", counts["HALAL"])
@@ -95,7 +100,7 @@ if st.button("🔍 Check Status", use_container_width=True):
             st.caption("These statements indicate possible exposure or shared-facility risk, not proof that the listed substance is a direct ingredient. Seek product-specific clarification.")
         st.subheader(result["status"])
         st.write(result["rule_explanation"])
-        with st.expander("🧠 Reasoning Trace", expanded=True):
+        with st.expander("🧠 Technical reasoning (optional)", expanded=False):
             for step in result["trace"]:
                 st.write("**Step " + str(step["step"]) + " · " + step["type"] + "** — " + step["detail"])
             st.caption("Rule fired: " + result["rule_id"] + " · Priority: " + str(result["priority"]))
