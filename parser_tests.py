@@ -20,6 +20,17 @@ TEST_CASES = [
     {"name":"E471 doubtful", "input":"E471", "expected":"MASHKOOK"},
     {"name":"Recognized list plus unknown", "input":"salt, xyz additive", "expected":"UNKNOWN"},
     {"name":"Empty input", "input":"", "expected":"UNKNOWN"},
+
+    {"name":"Specific oil not reduced to generic soy", "input":"Soybean Oil", "expected":"HALAL"},
+    {"name":"Specific oil not reduced to generic corn", "input":"Corn Oil", "expected":"HALAL"},
+    {"name":"Specific oil not reduced to generic rice", "input":"Rice Bran Oil", "expected":"HALAL"},
+    {"name":"Common plant oils recognized", "input":"Olive Oil, Sunflower Oil, Canola Oil, Sesame Oil", "expected":"HALAL"},
+    {"name":"Repeated unknowns deduplicated", "input":"E999, e999, E999, Salt", "expected":"UNKNOWN"},
+    {"name":"E471 and common name produce one result", "input":"E471, Mono Diglycerides", "expected":"MASHKOOK"},
+    {"name":"Tallow is source-sensitive", "input":"Tallow", "expected":"MASHKOOK"},
+    {"name":"Beef tallow is not generic beef", "input":"Beef Tallow", "expected":"MASHKOOK"},
+    {"name":"Vegetable tallow is not generic vegetables", "input":"Vegetable Tallow", "expected":"HALAL"},
+
 ]
 
 def run_tests():
