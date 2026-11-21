@@ -10,12 +10,15 @@ st.set_page_config(page_title="Food Inspector | Halal & E-Code Checker", page_ic
 
 st.markdown("""
 <style>
-.stApp { background: linear-gradient(180deg,#f4fbf7 0%,#ffffff 45%); }
+/* Theme-aware styling */
+.stApp { background: var(--background-color); color: var(--text-color); }
 .block-container { max-width: 900px; padding-top: 2rem; }
+[data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li, .stCaption, label, [data-testid="stMetricLabel"], [data-testid="stMetricValue"] { color: var(--text-color); }
 .hero { padding: 2rem 1.6rem; border-radius: 24px; background: linear-gradient(135deg,#0c5135,#16805a); color: white; text-align:center; margin-bottom:1.5rem; box-shadow:0 12px 35px rgba(12,81,53,.15); }
-.hero h1 { color:white; font-size:2.5rem; margin-bottom:.3rem; }
-.hero p { color:#e2f4e9; }
-.panel { background:white; padding:1.2rem 1.4rem; border:1px solid #e4eee8; border-radius:18px; }
+.hero h1 { color:white !important; font-size:2.5rem; margin-bottom:.3rem; }
+.hero p { color:#e2f4e9 !important; }
+.panel { background:var(--secondary-background-color); color:var(--text-color); padding:1.2rem 1.4rem; border:1px solid rgba(128,128,128,.25); border-radius:18px; }
+.panel b { color:var(--text-color); }
 div.stButton > button { background:#16764a; color:white; border:0; border-radius:12px; min-height:3rem; font-weight:700; }
 div.stButton > button:hover { background:#105c39; color:white; }
 </style>
