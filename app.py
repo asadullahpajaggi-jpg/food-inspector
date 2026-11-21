@@ -13,7 +13,10 @@ st.markdown("""
 <style>
 /* Theme-aware styling */
 .stApp { background: var(--background-color); color: var(--text-color); }
-.block-container { max-width: 900px; padding-top: 2rem; }
+.block-container { max-width: 900px; padding-top: 1.2rem; }
+[data-testid="stSidebar"] { border-right: 1px solid rgba(128,128,128,.2); }
+[data-testid="stSidebar"] button { text-align:left; }
+.back-arrow div.stButton > button { background:transparent !important; color:var(--text-color) !important; border:1px solid rgba(128,128,128,.3) !important; border-radius:50% !important; min-height:2.5rem !important; width:2.5rem !important; padding:0 !important; font-size:1.3rem !important; }
 [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li, .stCaption, label, [data-testid="stMetricLabel"], [data-testid="stMetricValue"] { color: var(--text-color); }
 .hero { padding: 2rem 1.6rem; border-radius: 24px; background: linear-gradient(135deg,#0c5135,#16805a); color: white; text-align:center; margin-bottom:1.5rem; box-shadow:0 12px 35px rgba(12,81,53,.15); }
 .hero h1 { color:white !important; font-size:2.5rem; margin-bottom:.3rem; }
@@ -37,6 +40,23 @@ def navigate(page, mode=None):
     if mode:
         st.query_params["mode"] = mode
     st.rerun()
+
+# Compact navigation drawer for informational and maintenance pages.
+with st.sidebar:
+    st.markdown("## 🍽️ Food Inspector")
+    st.caption("Navigate")
+    if st.button("🏠 Home", use_container_width=True, key="nav_home"):
+        navigate("home")
+    if st.button("📘 Ingredient Guide", use_container_width=True, key="nav_guide"):
+        navigate("guide")
+    if st.button("⚙️ How It Works", use_container_width=True, key="nav_how"):
+        navigate("how")
+    if st.button("ℹ️ About & Disclaimer", use_container_width=True, key="nav_about"):
+        navigate("about")
+    st.divider()
+    st.caption("Developer tools")
+    if st.button("🛠️ Developer Dashboard", use_container_width=True, key="nav_developer"):
+        navigate("developer")
 
 page = st.query_params.get("page", "home")
 checker_mode = st.query_params.get("mode", "ingredients")
@@ -80,28 +100,14 @@ if page == "home":
         if st.button("Open Scanner", key="home_scanner", use_container_width=True):
             navigate("checker", "scanner")
 
-    st.markdown("---")
-    st.markdown("### Explore Food Inspector")
-    n1, n2, n3 = st.columns(3)
-    with n1:
-        if st.button("📘 Ingredient Guide", key="home_guide", use_container_width=True):
-            navigate("guide")
-    with n2:
-        if st.button("⚙️ How It Works", key="home_how", use_container_width=True):
-            navigate("how")
-    with n3:
-        if st.button("ℹ️ About", key="home_about", use_container_width=True):
-            navigate("about")
-
-    st.caption("Project maintenance")
-    if st.button("🛠️ Developer Dashboard", key="home_developer"):
-        navigate("developer")
 
 elif page == "checker":
-    back_col, title_col = st.columns([1, 5])
+    back_col, title_col = st.columns([0.55, 5])
     with back_col:
-        if st.button("← Back", key="checker_back"):
+        st.markdown('<div class="back-arrow">', unsafe_allow_html=True)
+        if st.button("←", key="checker_back", help="Back to Home"):
             navigate("home")
+        st.markdown('</div>', unsafe_allow_html=True)
     mode_titles = {
         "ingredients": ("🥗 Ingredient Checker", "Enter one ingredient or paste a complete ingredient list."),
         "ecode": ("🔢 E-Code Checker", "Enter an E-Code or multiple E-Codes separated by commas."),
@@ -136,7 +142,7 @@ elif page == "checker":
             check_label = "🔍 Check E-Code"
         should_check = st.button(check_label, use_container_width=True, key="run_checker")
 elif page == "about":
-    if st.button("← Back", key="about_back"):
+    if st.button("←", key="about_back", help="Back to Home"):
         navigate("home")
     st.markdown("## About Food Inspector")
     st.write("Food Inspector is an educational Halal food ingredient and E-Code analysis project. It uses a curated knowledge base, ingredient matching and a rule-based decision layer to explain preliminary results.")
@@ -152,7 +158,7 @@ elif page == "about":
     </div>
     """, unsafe_allow_html=True)
 elif page == "guide":
-    if st.button("← Back", key="guide_back"):
+    if st.button("←", key="guide_back", help="Back to Home"):
         navigate("home")
     st.markdown("## Ingredient & Status Guide")
     st.markdown("""
@@ -163,7 +169,7 @@ elif page == "guide":
     """)
     st.info("A status is an educational indication, not product certification. For meat-derived ingredients, source and proper Zabiha slaughter may be essential.")
 elif page == "how":
-    if st.button("← Back", key="how_back"):
+    if st.button("←", key="how_back", help="Back to Home"):
         navigate("home")
     st.markdown("## How Food Inspector Works")
     st.markdown("""
@@ -174,7 +180,7 @@ elif page == "how":
     """)
     st.caption("Matching and rule-based reasoning support educational analysis; they do not replace expert review or certification.")
 elif page == "developer":
-    if st.button("← Back", key="developer_back"):
+    if st.button("←", key="developer_back", help="Back to Home"):
         navigate("home")
     st.markdown("## Developer Dashboard")
     st.caption("Technical inspection tools are kept separate from the public checker.")
