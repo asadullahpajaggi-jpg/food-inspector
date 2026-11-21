@@ -61,7 +61,9 @@ if st.button("🔍 Check Status", use_container_width=True):
         findings = "; ".join(item["name"] + " (" + item["status"] + "): " + item["reason"] for item in result["matches"])
         if result["unknown"]:
             findings += ("; " if findings else "") + "Unidentified: " + ", ".join(result["unknown"])
-        report_text = intro + (" " + findings if findings else "") + " This is an educational reference, not Halal certification or a fatwa."
+        main_report = intro + (" " + findings if findings else "")
+        disclaimer = "This is an educational reference, not Halal certification or a fatwa."
+        report_text = main_report + " " + disclaimer
         st.markdown("## Ingredient assessment")
         st.markdown("### Result")
         import streamlit.components.v1 as components
@@ -70,14 +72,18 @@ if st.button("🔍 Check Status", use_container_width=True):
         html_template = """
         <div style="font-family:sans-serif;position:relative;background:#ffffff;color:#202124;border:1px solid #c8cdd2;border-radius:12px;padding:20px 52px 22px 18px;line-height:1.7;overflow-wrap:anywhere;min-height:150px;">
           <button id="copyResult" title="Copy result" aria-label="Copy result" style="position:absolute;top:10px;right:10px;border:0;background:#f1f3f4;color:#202124;border-radius:8px;padding:6px;cursor:pointer;font-size:18px;">📋</button>
-          <div id="resultText" style="color:#202124 !important;font-size:16px;font-weight:400;white-space:normal;"></div><span id="copyMsg" style="font-size:12px;color:#202124;"></span>
+          <div id="resultText" style="color:#202124 !important;font-size:16px;font-weight:400;white-space:normal;"></div>
+          <div id="disclaimerText" style="color:#6b7280 !important;font-size:13px;font-weight:400;margin-top:12px;white-space:normal;"></div><span id="copyMsg" style="font-size:12px;color:#202124;"></span>
         </div>
         <script>
           const report = REPORT_PLACEHOLDER;
-          document.getElementById('resultText').textContent=report;
+          const mainReport = MAIN_PLACEHOLDER;
+          const disclaimer = DISCLAIMER_PLACEHOLDER;
+          document.getElementById('resultText').textContent=mainReport;
+          document.getElementById('disclaimerText').textContent=disclaimer;
           document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable';}};
         </script>
-        """.replace("REPORT_PLACEHOLDER", safe_report)
+        """.replace("REPORT_PLACEHOLDER", safe_report).replace("MAIN_PLACEHOLDER", json.dumps(main_report)).replace("DISCLAIMER_PLACEHOLDER", json.dumps(disclaimer))
         components.html(html_template, height=400)
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
