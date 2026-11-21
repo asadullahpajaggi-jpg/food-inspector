@@ -66,17 +66,29 @@ if st.button("🔍 Check Status", use_container_width=True):
         report_text = main_report + " " + disclaimer
         st.markdown("## Ingredient assessment")
         st.markdown("### Result")
+        import streamlit.components.v1 as components
         import json
-        # Render the report using native Streamlit elements so it can grow naturally without iframe clipping.
-        st.markdown('<div style="background:#ffffff;color:#202124;border:1px solid #c8cdd2;border-radius:12px;padding:16px 18px 12px;line-height:1.7;">', unsafe_allow_html=True)
-        st.markdown(main_report)
-        st.markdown('<div style="color:#6b7280;font-size:13px;">' + disclaimer + '</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-        copy_col, _ = st.columns([1, 5])
-        with copy_col:
-            if st.button('📋 Copy result', key='copy_result_button'):
-                st.code(report_text, language=None)
-                st.caption('Select and copy the report text above.')
+        # A self-contained result card with copy icon and content-driven scrolling.
+        # Use an iframe whose fixed height is deliberately generous, with internal scroll if needed.
+        safe_report = json.dumps(report_text)
+        result_html = """
+        <div id="card" style="font-family:sans-serif;position:relative;background:#ffffff;color:#202124;border:1px solid #c8cdd2;border-radius:12px;padding:18px 52px 18px 18px;line-height:1.7;overflow-wrap:anywhere;box-sizing:border-box;">
+          <button id="copyResult" title="Copy result" aria-label="Copy result" style="position:absolute;top:10px;right:10px;border:0;background:#f1f3f4;color:#202124;border-radius:8px;padding:6px;cursor:pointer;font-size:18px;">📋</button>
+          <div id="resultText" style="font-size:16px;white-space:normal;"></div>
+          <div id="disclaimerText" style="color:#6b7280;font-size:13px;margin-top:12px;white-space:normal;"></div><span id="copyMsg" style="font-size:12px;color:#202124;"></span>
+        </div>
+        <script>
+          const report = REPORT_PLACEHOLDER;
+          const mainReport = MAIN_PLACEHOLDER;
+          const disclaimer = DISCLAIMER_PLACEHOLDER;
+          document.getElementById('resultText').textContent=mainReport;
+          document.getElementById('disclaimerText').textContent=disclaimer;
+          document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable';}};
+        </script>
+        """.replace("REPORT_PLACEHOLDER", safe_report).replace("MAIN_PLACEHOLDER", json.dumps(main_report)).replace("DISCLAIMER_PLACEHOLDER", json.dumps(disclaimer))
+        # Estimate conservatively for mobile widths; this is the prior compact card UX.
+        result_height = min(1500, max(420, 180 + len(main_report) * 1.15))
+        components.html(result_html, height=result_height)
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
         c1.metric("HALAL", counts["HALAL"])
