@@ -1,4 +1,5 @@
 import streamlit as st
+import html
 from knowledge_base import INGREDIENTS, E_CODES, FACTS, knowledge_base_summary
 from matcher import analyze_input
 from decision_engine import decide
@@ -58,40 +59,75 @@ if st.button("🔍 Check Status", use_container_width=True):
             "MASHKOOK": "This ingredient list contains an ingredient whose source or processing needs confirmation.",
             "UNKNOWN": "Some ingredients could not be identified, so the list needs further checking."
         }.get(status, "The ingredient list needs further checking.")
-        findings = ". ".join(item["name"] + " (" + item["status"] + "): " + item["reason"].rstrip(". ") for item in result["matches"])
-        if result["unknown"]:
-            if status in ("HARAM", "MASHKOOK"):
-                findings += (". " if findings else "") + "Other unidentified ingredients also need checking: " + ", ".join(result["unknown"])
-            else:
-                findings += (". " if findings else "") + "Unidentified: " + ", ".join(result["unknown"])
-        main_report = intro + (" " + findings if findings else "")
         disclaimer = "This is an educational reference, not Halal certification or a fatwa."
-        report_text = main_report + " " + disclaimer
+        # Build a readable structured report while keeping the copy button's plain-text output.
+        status_class = {"HALAL": "halal", "MASHKOOK": "mashkook", "HARAM": "haram", "UNKNOWN": "unknown"}.get(status, "unknown")
+        card_parts = [
+            '<div class="overall ' + status_class + '"><div class="overall-label">OVERALL ASSESSMENT</div><div class="overall-status">' + html.escape(status) + '</div><div class="overall-intro">' + html.escape(intro) + '</div></div>'
+        ]
+        plain_parts = [intro]
+        for item in result["matches"]:
+            item_name = item["name"]
+            item_status = item["status"]
+            item_reason = item["reason"].rstrip(". ")
+            item_class = {"HALAL": "halal", "MASHKOOK": "mashkook", "HARAM": "haram"}.get(item_status, "unknown")
+            card_parts.append(
+                '<div class="ingredient"><div class="ingredient-heading"><strong>' + html.escape(item_name) +
+                '</strong><span class="status ' + item_class + '">' + html.escape(item_status) +
+                '</span></div><div class="reason">' + html.escape(item_reason) + '</div></div>'
+            )
+            plain_parts.append(item_name + " (" + item_status + "): " + item_reason + ".")
+        if result["unknown"]:
+            unknown_text = ", ".join(result["unknown"])
+            card_parts.append(
+                '<div class="unknown"><strong>Needs identification</strong><div>' +
+                html.escape(unknown_text) + '</div><div class="reason">These ingredients could not be identified in the current reference database.</div></div>'
+            )
+            plain_parts.append("Other unidentified ingredients also need checking: " + unknown_text + ".")
+        card_parts.append('<div class="disclaimer">' + html.escape(disclaimer) + '</div>')
+        main_report = "\\n\\n".join(plain_parts)
+        report_text = main_report + "\\n\\n" + disclaimer
         st.markdown("## Ingredient assessment")
         st.markdown("### Result")
         import streamlit.components.v1 as components
         import json
-        # A self-contained result card with copy icon and content-driven scrolling.
-        # Use an iframe whose fixed height is deliberately generous, with internal scroll if needed.
         safe_report = json.dumps(report_text)
         result_html = """
-        <div id="card" style="font-family:sans-serif;position:relative;background:#ffffff;color:#202124;border:1px solid #c8cdd2;border-radius:12px;padding:18px 52px 18px 18px;line-height:1.7;overflow-wrap:anywhere;box-sizing:border-box;">
-          <button id="copyResult" title="Copy result" aria-label="Copy result" style="position:absolute;top:10px;right:10px;border:0;background:#f1f3f4;color:#202124;border-radius:8px;padding:6px;cursor:pointer;font-size:18px;">📋</button>
-          <div id="resultText" style="font-size:16px;white-space:normal;"></div>
-          <div id="disclaimerText" style="color:#6b7280;font-size:13px;margin-top:12px;white-space:normal;"></div><span id="copyMsg" style="font-size:12px;color:#202124;"></span>
+        <style>
+          * { box-sizing:border-box; }
+          #card { font-family:Arial,sans-serif; background:#fff; color:#202124; border:1px solid #d8dee5; border-radius:14px; padding:16px; line-height:1.55; overflow-wrap:anywhere; }
+          .overall { border-radius:11px; padding:14px; margin-bottom:12px; border:1px solid #d8dee5; background:#f7f9fb; }
+          .overall-label { font-size:11px; letter-spacing:1px; font-weight:700; color:#596579; }
+          .overall-status { font-size:20px; font-weight:800; margin:3px 0 5px; }
+          .overall-intro { font-size:14px; }
+          .ingredient { border:1px solid #e1e5ea; border-radius:10px; padding:12px; margin:9px 0; background:#fff; }
+          .ingredient-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+          .ingredient-heading strong { font-size:15px; }
+          .status { font-size:11px; font-weight:800; border-radius:20px; padding:4px 9px; }
+          .halal { color:#17643b; background:#e7f5ec; }
+          .mashkoook, .mashko k { color:#805500; background:#fff3d5; }
+          .mashko ok { color:#805500; background:#fff3d5; }
+          .haram { color:#a32222; background:#fdeaea; }
+          .unknown { color:#6541a5; background:#f1eafe; }
+          .reason { font-size:13px; color:#4b5563; margin-top:7px; }
+          .unknown { border:1px solid #e2d5fa; border-radius:10px; padding:12px; margin-top:10px; }
+          .unknown strong { display:block; margin-bottom:4px; }
+          .disclaimer { border-top:1px solid #e5e7eb; margin-top:14px; padding-top:11px; color:#6b7280; font-size:12px; }
+          #copyResult { position:absolute; top:12px; right:12px; border:0; background:#f1f3f4; color:#202124; border-radius:8px; padding:6px 9px; cursor:pointer; font-size:17px; }
+          #copyMsg { font-size:12px; color:#17643b; margin-left:8px; }
+        </style>
+        <div id="card" style="position:relative;padding-top:48px;">
+          <button id="copyResult" title="Copy result" aria-label="Copy result">📋</button>
+          <div id="resultText">MAIN_HTML_PLACEHOLDER</div>
+          <div id="copyMsg"></div>
         </div>
         <script>
           const report = REPORT_PLACEHOLDER;
-          const mainReport = MAIN_PLACEHOLDER;
-          const disclaimer = DISCLAIMER_PLACEHOLDER;
-          document.getElementById('resultText').textContent=mainReport;
-          document.getElementById('disclaimerText').textContent=disclaimer;
           document.getElementById('copyResult').onclick=async()=>{try{await navigator.clipboard.writeText(report);document.getElementById('copyMsg').textContent='Copied';}catch(e){document.getElementById('copyMsg').textContent='Copy unavailable';}};
         </script>
-        """.replace("REPORT_PLACEHOLDER", safe_report).replace("MAIN_PLACEHOLDER", json.dumps(main_report)).replace("DISCLAIMER_PLACEHOLDER", json.dumps(disclaimer))
-        # Estimate conservatively for mobile widths; this is the prior compact card UX.
-        result_height = min(1500, max(420, 180 + len(main_report) * 1.15))
-        components.html(result_html, height=result_height)
+        """.replace("REPORT_PLACEHOLDER", safe_report).replace("MAIN_HTML_PLACEHOLDER", json.dumps("".join(card_parts)))
+        result_height = min(1500, max(420, 220 + len(card_parts) * 105 + sum(len(x["reason"]) for x in result["matches"]) * 0.25))
+        components.html(result_html, height=int(result_height))
         counts = label_report["counts"]
         c1,c2,c3 = st.columns(3)
         c1.metric("HALAL", counts["HALAL"])
