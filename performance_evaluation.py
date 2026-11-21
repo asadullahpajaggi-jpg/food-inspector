@@ -9,7 +9,7 @@ CASES = [
     {"name":"Plant oil","input":"Olive Oil","recognized":["Olive Oil"],"unknown":[],"status":"HALAL"},
     {"name":"Unrecognized code","input":"E999","recognized":[],"unknown":["E999"],"status":"UNKNOWN"},
     {"name":"Recognized plus unknown","input":"Sugar, E999","recognized":["Sugar"],"unknown":["E999"],"status":"UNKNOWN"},
-    {"name":"Source-dependent gelatin","input":"Gelatin","recognized":["Gelatin"],"unknown":[],"status":"MASHKOOK"},
+    {"name":"Source-dependent gelatin","input":"Gelatin","recognized":["E441 — Gelatin"],"unknown":[],"status":"MASHKOOK"},
     {"name":"E-Code gelatin","input":"E441","recognized":["E441 — Gelatin"],"unknown":[],"status":"MASHKOOK"},
     {"name":"Haram precedence","input":"Sugar, Pork","recognized":["Sugar","Pork"],"unknown":[],"status":"HARAM"},
     {"name":"Mixed uncertainty","input":"Sugar, Gelatin, E999","recognized":["Sugar","E441 — Gelatin"],"unknown":["E999"],"status":"MASHKOOK"},
